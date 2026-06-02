@@ -1,0 +1,42 @@
+# LiteLLM production config — params per https://docs.litellm.ai/docs/proxy/prod
+# __BEDROCK_GEO__ (us|eu|jp|au|global) is substituted at container start from $BEDROCK_GEO (see docker-entrypoint.sh).
+# aws_region_name resolves from the AWS_REGION env injected by the task definition.
+model_list:
+  - model_name: claude-opus-4-8
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-opus-4-8
+      aws_region_name: os.environ/AWS_REGION
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-sonnet-4-6
+      aws_region_name: os.environ/AWS_REGION
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-haiku-4-5-20251001-v1:0
+      aws_region_name: os.environ/AWS_REGION
+  # Bedrock auth uses the ECS task IAM role — no API keys needed.
+  # Sonnet 4.6 / Opus 4.7+ dropped the -v1 date suffix; Haiku 4.5 still carries it.
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL          # composed by docker-entrypoint.sh
+  store_model_in_db: true                         # manage models via Admin UI without a rebuild
+  proxy_batch_write_at: 60                         # batch spend writes -> less DB pressure
+  allow_requests_on_db_unavailable: true           # keep serving if DB blips (safe: private VPC only)
+  database_connection_pool_limit: 10               # total = 10 x 1 worker x <=10 tasks = <=100 conns
+
+litellm_settings:
+  request_timeout: 600
+  set_verbose: false
+  json_logs: true
+  drop_params: true
+  cache: true
+  cache_params:
+    type: redis
+    host: os.environ/REDIS_HOST
+    port: os.environ/REDIS_PORT
+
+router_settings:
+  routing_strategy: simple-shuffle                 # recommended for high traffic
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT

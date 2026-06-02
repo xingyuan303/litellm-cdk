@@ -1,0 +1,21 @@
+{
+  "name": "litellm-cdk",
+  "version": "1.0.0",
+  "bin": { "litellm-cdk": "bin/litellm.js" },
+  "scripts": {
+    "build": "tsc",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "aws-cdk": "^2.1000.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.5.4"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.200.0",
+    "constructs": "^10.3.0"
+  }
+}
