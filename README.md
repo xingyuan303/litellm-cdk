@@ -99,7 +99,7 @@ curl $ANTHROPIC_BASE_URL/v1/models -H "Authorization: Bearer $ANTHROPIC_API_KEY"
 - **ECS 任务起不来**：查容器日志（CloudWatch，stream 前缀 `litellm`；用 `aws logs describe-log-groups` 找到 `Litellm-App` 下的日志组），并看 `aws ecs describe-tasks` 的 `stoppedReason`。
 - **CloudFront 返回 502/504**：多半是 ALB target 不健康。确认 `/health/readiness` 通过、ECS 任务为 RUNNING、ALB 安全组放行了 CloudFront 托管前缀列表。
 - **Bedrock AccessDenied / 模型不可用**：确认目标区域已启用该模型、`bedrockGeo` 前缀与源区域匹配（如 ap-southeast-1 用 `global`）、任务角色含 bedrock 权限；若用 `global` 且组织有 SCP 区域限制，放行 `aws:RequestedRegion: "unspecified"`。
-- **数据库连不上**：检查 secret 是否注入、ECS→RDS 安全组（5432）、`DATABASE_URL` 由 entrypoint 拼接是否正确。
+- **数据库连不上**：检查 secret 是否注入、ECS→RDS 安全组（5432）、`DATABASE_URL` secret 是否正确。
 - **Redis 连不上**：检查 ECS→Redis 安全组（6379）和 `REDIS_HOST` / `REDIS_PORT` 环境变量。
 - **VPC origin 不通**：确认 ALB 安全组放行了 CloudFront 前缀列表，且区域 AZ 支持 VPC origins（us-east-1 避开 `use1-az3`）。
 - **WAF 误拦合法请求**：在 WAF 的 CloudWatch 指标 / sampled requests 中查被哪条规则拦截，按需调整。
@@ -117,7 +117,7 @@ aws ecs update-service --cluster <cluster> --service <service> --force-new-deplo
 - **区域可配置**：通过 `-c region=<region> -c bedrockGeo=<us|eu|jp|au|global>`（见 `bin/litellm.ts`）。
   工作负载（Network/Data/App）运行在你选定的区域；只有 CloudFront 的 WAF（`Litellm-Waf`）
   被强制放在 us-east-1（AWS 硬性要求），并通过 `crossRegionReferences` 跨区共享。`bedrockGeo`
-  会在容器启动时替换进每个 Bedrock 模型 ID。`global` 路由到全球且对所有模型统一通用；geo 前缀
+  会在镜像构建时（build arg）替换进每个 Bedrock 模型 ID。`global` 路由到全球且对所有模型统一通用；geo 前缀
   则因模型而异（当前 Claude 模型用 `us`/`eu`/`jp`/`au`，已无 `apac`）——请选一个其 profile 覆盖你
   源区域的前缀。使用 `global` 时，若你的组织用 SCP 限制区域，必须放行
   `aws:RequestedRegion: "unspecified"`。同时确认该区域 + AZ 支持 CloudFront VPC origins
@@ -132,5 +132,5 @@ aws ecs update-service --cluster <cluster> --service <service> --force-new-deplo
 - **RDS** 使用预置的 `db.t3.medium` Multi-AZ，删除策略为 `RETAIN`。对于突发/低流量场景，可改用
   Aurora Serverless v2 并设 `serverlessV2MinCapacity: 0`（注意冷启动恢复延迟）。
 - **基础镜像**为 `main-stable`（浮动标签）。生产环境请 pin 到具体 release 标签或 `@sha256` digest 以保证可复现。
-- 镜像 entrypoint 在容器启动时用 secret 字段拼出 `DATABASE_URL`；生成 secret 时已排除会破坏 URL 的
-  DB 密码字符。
+- **DATABASE_URL** 在 CDK 中合成为独立的 Secrets Manager secret 注入容器；生成 DB 密码时已排除会破坏 URL 的字符。
+- **健康检查依赖 `python3`**：容器健康检查用 `python3` 探测 `/health/readiness`（见 `lib/app-stack.ts` 与 `Dockerfile`）。
