@@ -25,7 +25,16 @@ export class WafStack extends cdk.Stack {
         },
         {
           name: 'Common', priority: 2, overrideAction: { none: {} },
-          statement: { managedRuleGroupStatement: { vendorName: 'AWS', name: 'AWSManagedRulesCommonRuleSet' } },
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: 'AWS',
+              name: 'AWSManagedRulesCommonRuleSet',
+              // LLM request bodies routinely exceed WAF's 8KB inspected limit; don't block on size.
+              ruleActionOverrides: [
+                { name: 'SizeRestrictions_BODY', actionToUse: { count: {} } },
+              ],
+            },
+          },
           visibilityConfig: { cloudWatchMetricsEnabled: true, metricName: 'litellm-common', sampledRequestsEnabled: true },
         },
       ],
