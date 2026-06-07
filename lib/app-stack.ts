@@ -17,6 +17,7 @@ interface AppStackProps extends cdk.StackProps {
   webAclArn: string;
   bedrockGeo: string;
   dbSecret: secretsmanager.ISecret;
+  databaseUrlSecret: secretsmanager.ISecret;
   dbSecurityGroupId: string;
   redisHost: string;
   redisPort: number;
@@ -66,6 +67,7 @@ export class AppStack extends cdk.Stack {
     // CDK builds + pushes the image; the asset content hash is an immutable tag (no :latest).
     const image = ecs.ContainerImage.fromAsset(path.join(__dirname, '..'), {
       platform: ecrAssets.Platform.LINUX_AMD64,
+      buildArgs: { BEDROCK_GEO: props.bedrockGeo },
     });
 
     taskDef.addContainer('litellm', {
@@ -78,18 +80,12 @@ export class AppStack extends cdk.Stack {
         LITELLM_LOG: 'ERROR',
         USE_PRISMA_MIGRATE: 'True',
         AWS_REGION: this.region,
-        BEDROCK_GEO: props.bedrockGeo,
         REDIS_HOST: props.redisHost,
         REDIS_PORT: String(props.redisPort),
       },
       // Injected at runtime from Secrets Manager (never in the task def plaintext).
-      // DB fields are composed into DATABASE_URL by docker-entrypoint.sh.
       secrets: {
-        DB_USER: ecs.Secret.fromSecretsManager(props.dbSecret, 'username'),
-        DB_PASS: ecs.Secret.fromSecretsManager(props.dbSecret, 'password'),
-        DB_HOST: ecs.Secret.fromSecretsManager(props.dbSecret, 'host'),
-        DB_PORT: ecs.Secret.fromSecretsManager(props.dbSecret, 'port'),
-        DB_NAME: ecs.Secret.fromSecretsManager(props.dbSecret, 'dbname'),
+        DATABASE_URL: ecs.Secret.fromSecretsManager(props.databaseUrlSecret),
         LITELLM_MASTER_KEY: ecs.Secret.fromSecretsManager(props.masterKey),
         LITELLM_SALT_KEY: ecs.Secret.fromSecretsManager(props.saltKey),
       },

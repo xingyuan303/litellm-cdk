@@ -20,6 +20,7 @@ export class DataStack extends cdk.Stack {
   public readonly redisSecurityGroupId: string;
   public readonly masterKey: secretsmanager.ISecret;
   public readonly saltKey: secretsmanager.ISecret;
+  public readonly databaseUrlSecret: secretsmanager.ISecret;
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
@@ -52,6 +53,14 @@ export class DataStack extends cdk.Stack {
     });
     this.dbSecret = db.secret!;
     this.dbSecurityGroupId = db.connections.securityGroups[0].securityGroupId;
+
+    // Full DATABASE_URL composed as its own secret (password chars that break URLs are excluded above).
+    // Injected directly into the container so the image's native entrypoint can run Prisma/migrations.
+    this.databaseUrlSecret = new secretsmanager.Secret(this, 'DatabaseUrl', {
+      secretStringValue: cdk.SecretValue.unsafePlainText(
+        `postgresql://${db.secret!.secretValueFromJson('username').unsafeUnwrap()}:${db.secret!.secretValueFromJson('password').unsafeUnwrap()}@${db.dbInstanceEndpointAddress}:${db.dbInstanceEndpointPort}/litellm`,
+      ),
+    });
 
     // ---------- ElastiCache Redis (Multi-AZ replication group) ----------
     // Shared cache + routing state across all Fargate tasks (required once you run >1 instance).

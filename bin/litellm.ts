@@ -32,6 +32,7 @@ new AppStack(app, 'Litellm-App', {
   bedrockGeo,
   vpc: network.vpc,
   dbSecret: data.dbSecret,
+  databaseUrlSecret: data.databaseUrlSecret,
   dbSecurityGroupId: data.dbSecurityGroupId,
   redisHost: data.redisHost,
   redisPort: data.redisPort,
