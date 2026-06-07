@@ -20,7 +20,7 @@ export class WafStack extends cdk.Stack {
       rules: [
         {
           name: 'RateLimit', priority: 1, action: { block: {} },
-          statement: { rateBasedStatement: { limit: 2000, aggregateKeyType: 'IP' } },
+          statement: { rateBasedStatement: { limit: 200000, aggregateKeyType: 'IP' } },
           visibilityConfig: { cloudWatchMetricsEnabled: true, metricName: 'litellm-ratelimit', sampledRequestsEnabled: true },
         },
         {

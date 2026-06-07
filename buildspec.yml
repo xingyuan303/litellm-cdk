@@ -1,0 +1,20 @@
+version: 0.2
+
+# Runs `cdk deploy` inside CodeBuild, which provides Docker for the fromAsset image build.
+# Requires the CodeBuild project to have privilegedMode = true (Docker).
+# Optional env vars (set in the project): REGION, BEDROCK_GEO. Empty = code defaults (us-east-1 / us).
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - npm install
+  build:
+    commands:
+      - |
+        EXTRA=""
+        [ -n "$REGION" ] && EXTRA="$EXTRA -c region=$REGION"
+        [ -n "$BEDROCK_GEO" ] && EXTRA="$EXTRA -c bedrockGeo=$BEDROCK_GEO"
+        echo "Deploying with: $EXTRA"
+        npx cdk deploy --all --require-approval never $EXTRA
