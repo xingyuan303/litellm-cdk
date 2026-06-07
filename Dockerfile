@@ -9,7 +9,7 @@ RUN sed -i "s/__BEDROCK_GEO__/${BEDROCK_GEO}/g" /app/config.yaml
 
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
-  CMD curl -f http://localhost:4000/health/readiness || exit 1
+  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')" || exit 1
 
 # Use the image's built-in entrypoint (handles Prisma client / DB migration); pass args via CMD.
 CMD ["--port", "4000", "--config", "/app/config.yaml", "--num_workers", "1"]
