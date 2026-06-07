@@ -14,6 +14,11 @@ model_list:
     litellm_params:
       model: bedrock/__BEDROCK_GEO__.anthropic.claude-haiku-4-5-20251001-v1:0
       aws_region_name: os.environ/AWS_REGION
+  # Alias matching the dated ID Claude Code sends for its background/small model.
+  - model_name: claude-haiku-4-5-20251001
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-haiku-4-5-20251001-v1:0
+      aws_region_name: os.environ/AWS_REGION
   # Bedrock auth uses the ECS task IAM role — no API keys needed.
   # Sonnet 4.6 / Opus 4.7+ dropped the -v1 date suffix; Haiku 4.5 still carries it.
 
