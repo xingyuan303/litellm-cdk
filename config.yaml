@@ -6,6 +6,15 @@ model_list:
     litellm_params:
       model: bedrock/__BEDROCK_GEO__.anthropic.claude-opus-4-8
       aws_region_name: os.environ/AWS_REGION
+  - model_name: claude-opus-4-7
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-opus-4-7
+      aws_region_name: os.environ/AWS_REGION
+  # Note: opus-4-6's Bedrock ID carries a -v1 suffix (4-7/4-8 do not).
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-opus-4-6-v1
+      aws_region_name: os.environ/AWS_REGION
   - model_name: claude-sonnet-4-6
     litellm_params:
       model: bedrock/__BEDROCK_GEO__.anthropic.claude-sonnet-4-6
