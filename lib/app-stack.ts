@@ -60,7 +60,7 @@ export class AppStack extends cdk.Stack {
 
     const logGroup = new logs.LogGroup(this, 'Logs', {
       retention: logs.RetentionDays.ONE_MONTH,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
     // CDK builds + pushes the image; the asset content hash is an immutable tag (no :latest).
@@ -98,7 +98,7 @@ export class AppStack extends cdk.Stack {
         interval: cdk.Duration.seconds(30),
         timeout: cdk.Duration.seconds(5),
         retries: 3,
-        startPeriod: cdk.Duration.seconds(60),
+        startPeriod: cdk.Duration.seconds(120),
       },
     });
 
@@ -120,7 +120,7 @@ export class AppStack extends cdk.Stack {
       circuitBreaker: { rollback: true },
       minHealthyPercent: 100,
       maxHealthyPercent: 200,
-      healthCheckGracePeriod: cdk.Duration.seconds(120),
+      healthCheckGracePeriod: cdk.Duration.seconds(300),
     });
 
     listener.addTargets('Ecs', {
