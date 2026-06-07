@@ -1,5 +1,5 @@
 # LiteLLM production config — params per https://docs.litellm.ai/docs/proxy/prod
-# __BEDROCK_GEO__ (us|eu|jp|au|global) is substituted at container start from $BEDROCK_GEO (see docker-entrypoint.sh).
+# __BEDROCK_GEO__ (us|eu|jp|au|global) is substituted at image build time from the BEDROCK_GEO build arg (see Dockerfile).
 # aws_region_name resolves from the AWS_REGION env injected by the task definition.
 model_list:
   - model_name: claude-opus-4-8
@@ -14,8 +14,17 @@ model_list:
     litellm_params:
       model: bedrock/__BEDROCK_GEO__.anthropic.claude-haiku-4-5-20251001-v1:0
       aws_region_name: os.environ/AWS_REGION
-  # Alias matching the dated ID Claude Code sends for its background/small model.
-  - model_name: claude-haiku-4-5-20251001
+  # Wildcard aliases — any dated/version variant Claude Code sends maps to the right Bedrock model
+  # (no client-side env vars needed). Exact names above take precedence; these catch the rest.
+  - model_name: "claude-opus-4*"
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-opus-4-8
+      aws_region_name: os.environ/AWS_REGION
+  - model_name: "claude-sonnet-4*"
+    litellm_params:
+      model: bedrock/__BEDROCK_GEO__.anthropic.claude-sonnet-4-6
+      aws_region_name: os.environ/AWS_REGION
+  - model_name: "claude-haiku-4*"
     litellm_params:
       model: bedrock/__BEDROCK_GEO__.anthropic.claude-haiku-4-5-20251001-v1:0
       aws_region_name: os.environ/AWS_REGION
