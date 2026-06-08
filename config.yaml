@@ -42,7 +42,7 @@ model_list:
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
-  database_url: os.environ/DATABASE_URL          # composed by docker-entrypoint.sh
+  database_url: os.environ/DATABASE_URL          # injected as a Secrets Manager secret by the CDK app
   store_model_in_db: true                         # manage models via Admin UI without a rebuild
   proxy_batch_write_at: 60                         # batch spend writes -> less DB pressure
   allow_requests_on_db_unavailable: true           # keep serving if DB blips (safe: private VPC only)
@@ -53,6 +53,16 @@ litellm_settings:
   set_verbose: false
   json_logs: true
   drop_params: true
+  num_retries: 2                                   # retry each model_name before falling back
+  allowed_fails: 3                                 # failures/min before a model is cooled down
+  cooldown_time: 30                                # seconds to cool down a failing model
+  # On failure (429 / 5xx / etc.) after retries, fall back in order to the next model group.
+  fallbacks:
+    - {"claude-opus-4-8": ["claude-opus-4-7", "claude-sonnet-4-6"]}
+    - {"claude-opus-4-7": ["claude-opus-4-6", "claude-sonnet-4-6"]}
+    - {"claude-opus-4-6": ["claude-sonnet-4-6"]}
+    - {"claude-sonnet-4-6": ["claude-haiku-4-5"]}
+  default_fallbacks: ["claude-sonnet-4-6"]         # catch-all for any other group (incl. wildcards)
   cache: true
   cache_params:
     type: redis
