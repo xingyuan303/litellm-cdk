@@ -58,8 +58,8 @@ litellm_settings:
   cooldown_time: 30                                # seconds to cool down a failing model
   # On failure (429 / 5xx / etc.) after retries, fall back in order to the next model group.
   fallbacks:
-    - {"claude-opus-4-8": ["claude-opus-4-7", "claude-sonnet-4-6"]}
-    - {"claude-opus-4-7": ["claude-opus-4-6", "claude-sonnet-4-6"]}
+    - {"claude-opus-4-8": ["claude-sonnet-4-6"]}
+    - {"claude-opus-4-7": ["claude-sonnet-4-6"]}
     - {"claude-opus-4-6": ["claude-sonnet-4-6"]}
     - {"claude-sonnet-4-6": ["claude-haiku-4-5"]}
   default_fallbacks: ["claude-sonnet-4-6"]         # catch-all for any other group (incl. wildcards)
